@@ -31,7 +31,7 @@ export default function ChatPage() {
         setUserId(user.uid);
         const history = await getChats(user.uid);
         if (history.length > 0) {
-          setMessages(history as Message[]);
+          setMessages(history as unknown as Message[]);
         }
       }
     });
