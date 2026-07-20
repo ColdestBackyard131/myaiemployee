@@ -3,14 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,14 +21,11 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-      }
+      if (isLogin) await signInWithEmailAndPassword(auth, email, password);
+      else await createUserWithEmailAndPassword(auth, email, password);
       router.push("/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message.replace("Firebase: ", "") : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -42,91 +34,131 @@ export default function LoginPage() {
   const handleGoogle = async () => {
     setError("");
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, new GoogleAuthProvider());
       router.push("/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Google sign-in failed");
+      setError(err instanceof Error ? err.message.replace("Firebase: ", "") : "Google sign-in failed");
     }
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--bg-primary)" }}>
-      <div className="glass rounded-3xl p-8 w-full max-w-md">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="mb-4">
-            <Image src="/images/logo.jpeg" alt="My AI Employee" width={72} height={72} className="rounded-2xl glow" />
+    <main style={{ minHeight: "100vh", background: "#0f0f13", display: "flex" }}>
+      {/* Left Panel */}
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column", justifyContent: "center",
+        padding: "60px 80px", background: "linear-gradient(135deg, #0f0f13, #1a1a28)"
+      }} className="hidden md:flex">
+        <div style={{ marginBottom: 48 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40 }}>
+            <Image src="/images/logo.jpeg" alt="Logo" width={36} height={36} style={{ borderRadius: 8 }} />
+            <span style={{ fontWeight: 700, fontSize: 16, color: "#fff" }}>My AI Employee</span>
           </div>
-          <h1 className="text-2xl font-black gradient-text">My AI Employee</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-            {isLogin ? "Welcome back!" : "Create your account"}
+          <h2 style={{ fontSize: 40, fontWeight: 900, lineHeight: 1.2, letterSpacing: -1, marginBottom: 16 }}>
+            Your AI team<br /><span className="gradient-text">works 24/7</span>
+          </h2>
+          <p style={{ fontSize: 15, color: "#6a6a8a", lineHeight: 1.7 }}>
+            Chat, create content, manage tasks, and grow your business with your personal AI employees.
           </p>
         </div>
+        {["AI Chat & Voice Assistant", "Task Manager & Projects", "Social Media AI Manager", "5 Specialized AI Employees"].map((f) => (
+          <div key={f} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#7c6fff20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7c6fff" }} />
+            </div>
+            <span style={{ fontSize: 14, color: "#8a8aaa" }}>{f}</span>
+          </div>
+        ))}
+      </div>
 
-        {/* Toggle */}
-        <div className="flex rounded-xl p-1 mb-6" style={{ background: "var(--bg-secondary)" }}>
-          <button onClick={() => setIsLogin(true)}
-            className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
-            style={{ background: isLogin ? "var(--accent)" : "transparent", color: isLogin ? "#fff" : "var(--text-secondary)" }}>
-            Login
-          </button>
-          <button onClick={() => setIsLogin(false)}
-            className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
-            style={{ background: !isLogin ? "var(--accent)" : "transparent", color: !isLogin ? "#fff" : "var(--text-secondary)" }}>
-            Sign Up
-          </button>
+      {/* Right Panel */}
+      <div style={{
+        width: "100%", maxWidth: 480,
+        display: "flex", flexDirection: "column", justifyContent: "center",
+        padding: "60px 48px",
+        borderLeft: "1px solid #1a1a28"
+      }}>
+        {/* Mobile Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40 }} className="md:hidden">
+          <Image src="/images/logo.jpeg" alt="Logo" width={32} height={32} style={{ borderRadius: 8 }} />
+          <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>My AI Employee</span>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="relative">
-            <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-secondary)" }} />
-            <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)}
-              required className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-          </div>
-          <div className="relative">
-            <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-secondary)" }} />
-            <input type={showPass ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-              required className="w-full pl-10 pr-10 py-3 rounded-xl text-sm outline-none"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-            <button type="button" onClick={() => setShowPass(!showPass)}
-              className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-secondary)" }}>
-              {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+        <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6, letterSpacing: -0.5 }}>
+          {isLogin ? "Welcome back" : "Create account"}
+        </h1>
+        <p style={{ fontSize: 14, color: "#6a6a8a", marginBottom: 32 }}>
+          {isLogin ? "Sign in to your account to continue" : "Start your free account today"}
+        </p>
+
+        {/* Toggle */}
+        <div style={{ display: "flex", background: "#16161f", border: "1px solid #1e1e2e", borderRadius: 10, padding: 4, marginBottom: 28 }}>
+          {["Login", "Sign Up"].map((t, i) => (
+            <button key={t} onClick={() => setIsLogin(i === 0)}
+              style={{
+                flex: 1, padding: "9px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: "none", cursor: "pointer", transition: "all 0.15s",
+                background: (i === 0) === isLogin ? "#7c6fff" : "transparent",
+                color: (i === 0) === isLogin ? "#fff" : "#6a6a8a"
+              }}>
+              {t}
             </button>
-          </div>
-
-          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-
-          <button type="submit" disabled={loading}
-            className="py-3 rounded-xl font-bold text-sm glow transition-all hover:scale-105 disabled:opacity-50"
-            style={{ background: "var(--accent)", color: "#fff" }}>
-            {loading ? "Please wait..." : isLogin ? "Login" : "Create Account"}
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-4">
-          <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>or</span>
-          <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+          ))}
         </div>
 
         {/* Google */}
-        <button onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-          style={{ border: "1px solid var(--border)", color: "var(--text-primary)" }}>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <button onClick={handleGoogle} style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          padding: "12px", borderRadius: 10, fontSize: 14, fontWeight: 500,
+          background: "#16161f", border: "1px solid #2a2a3e", color: "#c0c0d8",
+          cursor: "pointer", marginBottom: 20, transition: "all 0.15s"
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg> Continue with Google
+          </svg>
+          Continue with Google
         </button>
 
-        <p className="text-center text-xs mt-6" style={{ color: "var(--text-secondary)" }}>
-          <Link href="/" style={{ color: "#6c63ff" }}>← Back to Home</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <div style={{ flex: 1, height: 1, background: "#1e1e2e" }} />
+          <span style={{ fontSize: 12, color: "#4a4a6a" }}>or continue with email</span>
+          <div style={{ flex: 1, height: 1, background: "#1e1e2e" }} />
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ position: "relative" }}>
+            <Mail size={16} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#4a4a6a" }} />
+            <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)}
+              required className="input-field" style={{ paddingLeft: 42, paddingRight: 16, paddingTop: 12, paddingBottom: 12, fontSize: 14 }} />
+          </div>
+          <div style={{ position: "relative" }}>
+            <Lock size={16} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#4a4a6a" }} />
+            <input type={showPass ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
+              required className="input-field" style={{ paddingLeft: 42, paddingRight: 42, paddingTop: 12, paddingBottom: 12, fontSize: 14 }} />
+            <button type="button" onClick={() => setShowPass(!showPass)}
+              style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#4a4a6a" }}>
+              {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+
+          {error && (
+            <div style={{ background: "#ef444415", border: "1px solid #ef444430", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#ef4444" }}>
+              {error}
+            </div>
+          )}
+
+          <button type="submit" disabled={loading} className="btn-primary"
+            style={{ padding: "13px", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 4 }}>
+            {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+            {!loading && <ArrowRight size={16} />}
+          </button>
+        </form>
+
+        <p style={{ textAlign: "center", fontSize: 13, color: "#4a4a6a", marginTop: 24 }}>
+          <Link href="/" style={{ color: "#7c6fff", textDecoration: "none" }}>← Back to Home</Link>
         </p>
       </div>
     </main>

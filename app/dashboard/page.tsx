@@ -5,36 +5,35 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { MessageSquare, CheckSquare, FolderOpen, Share2, Mic, TrendingUp, Clock, Zap } from "lucide-react";
+import { MessageSquare, CheckSquare, FolderOpen, Share2, Mic, TrendingUp, Zap, ArrowRight } from "lucide-react";
 
 const employees = [
-  { emoji: "👨💼", name: "CEO", color: "#6c63ff", desc: "Strategy & planning" },
-  { emoji: "✍️", name: "Writer", color: "#f59e0b", desc: "Content & copywriting" },
-  { emoji: "📱", name: "Social Media", color: "#10b981", desc: "Posts & campaigns" },
-  { emoji: "🎨", name: "Designer", color: "#ec4899", desc: "Visuals & branding" },
-  { emoji: "💻", name: "Programmer", color: "#3b82f6", desc: "Code & tech" },
+  { emoji: "👨💼", name: "CEO", color: "#7c6fff", desc: "Strategy & planning" },
+  { emoji: "✍️", name: "Writer", color: "#f59e0b", desc: "Content & copy" },
+  { emoji: "📱", name: "Social Media", color: "#34d399", desc: "Posts & campaigns" },
+  { emoji: "🎨", name: "Designer", color: "#f472b6", desc: "Visuals & branding" },
+  { emoji: "💻", name: "Programmer", color: "#60a5fa", desc: "Code & tech" },
 ];
 
 const quickActions = [
-  { href: "/chat", icon: <MessageSquare size={20} />, label: "New Chat", color: "#6c63ff" },
-  { href: "/voice", icon: <Mic size={20} />, label: "Voice Mode", color: "#10b981" },
-  { href: "/tasks", icon: <CheckSquare size={20} />, label: "Add Task", color: "#f59e0b" },
-  { href: "/social", icon: <Share2 size={20} />, label: "Social AI", color: "#ec4899" },
-  { href: "/projects", icon: <FolderOpen size={20} />, label: "Projects", color: "#3b82f6" },
+  { href: "/chat", icon: <MessageSquare size={16} />, label: "New Chat", color: "#7c6fff" },
+  { href: "/voice", icon: <Mic size={16} />, label: "Voice Mode", color: "#34d399" },
+  { href: "/tasks", icon: <CheckSquare size={16} />, label: "Add Task", color: "#f59e0b" },
+  { href: "/social", icon: <Share2 size={16} />, label: "Social AI", color: "#f472b6" },
+  { href: "/projects", icon: <FolderOpen size={16} />, label: "Projects", color: "#60a5fa" },
 ];
 
 const stats = [
-  { label: "Tasks Today", value: "0", icon: <CheckSquare size={20} />, color: "#6c63ff" },
-  { label: "AI Chats", value: "0", icon: <MessageSquare size={20} />, color: "#10b981" },
-  { label: "Projects", value: "0", icon: <FolderOpen size={20} />, color: "#f59e0b" },
-  { label: "AI Employees", value: "5", icon: <Zap size={20} />, color: "#ec4899" },
+  { label: "Tasks Today", value: "0", icon: <CheckSquare size={18} />, color: "#7c6fff", bg: "#7c6fff15" },
+  { label: "AI Chats", value: "0", icon: <MessageSquare size={18} />, color: "#34d399", bg: "#34d39915" },
+  { label: "Projects", value: "0", icon: <FolderOpen size={18} />, color: "#f59e0b", bg: "#f59e0b15" },
+  { label: "AI Employees", value: "5", icon: <Zap size={18} />, color: "#f472b6", bg: "#f472b615" },
 ];
 
 export default function Dashboard() {
   const router = useRouter();
   const [userName, setUserName] = useState("User");
-  const [hour] = useState(new Date().getHours());
-
+  const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
 
   useEffect(() => {
@@ -46,81 +45,98 @@ export default function Dashboard() {
   }, [router]);
 
   return (
-    <div className="flex" style={{ background: "var(--bg-primary)", minHeight: "100vh" }}>
+    <div style={{ display: "flex", background: "#0f0f13", minHeight: "100vh" }}>
       <Sidebar />
-      <main className="flex-1 ml-64 p-8">
+      <main style={{ flex: 1, marginLeft: 240, padding: "36px 40px", maxWidth: "calc(100vw - 240px)" }}>
+
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock size={16} style={{ color: "var(--text-secondary)" }} />
-            <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-            </span>
-          </div>
-          <h1 className="text-3xl font-black">
-            {greeting} 👋 <span className="gradient-text">{userName}</span>
+        <div style={{ marginBottom: 32 }}>
+          <p style={{ fontSize: 13, color: "#4a4a6a", marginBottom: 6 }}>
+            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+          </p>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>
+            {greeting}, <span className="gradient-text">{userName}</span> 👋
           </h1>
-          <p className="mt-1" style={{ color: "var(--text-secondary)" }}>Your AI team is ready to work.</p>
+          <p style={{ fontSize: 14, color: "#6a6a8a", marginTop: 4 }}>Your AI team is ready to work.</p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
           {stats.map((s) => (
-            <div key={s.label} className="glass rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{s.label}</span>
-                <div className="p-2 rounded-lg" style={{ background: `${s.color}20`, color: s.color }}>{s.icon}</div>
+            <div key={s.label} style={{ background: "#16161f", border: "1px solid #1e1e2e", borderRadius: 14, padding: "20px 22px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <span style={{ fontSize: 13, color: "#6a6a8a" }}>{s.label}</span>
+                <div style={{ width: 34, height: 34, borderRadius: 8, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", color: s.color }}>
+                  {s.icon}
+                </div>
               </div>
-              <p className="text-3xl font-black" style={{ color: s.color }}>{s.value}</p>
+              <p style={{ fontSize: 30, fontWeight: 800, color: s.color }}>{s.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <TrendingUp size={20} color="#6c63ff" /> Quick Actions
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            {quickActions.map((a) => (
-              <Link key={a.href} href={a.href}
-                className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-                style={{ background: `${a.color}20`, color: a.color, border: `1px solid ${a.color}40` }}>
-                {a.icon} {a.label}
-              </Link>
-            ))}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          {/* Quick Actions */}
+          <div style={{ background: "#16161f", border: "1px solid #1e1e2e", borderRadius: 16, padding: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
+              <TrendingUp size={16} color="#7c6fff" />
+              <span style={{ fontSize: 14, fontWeight: 700 }}>Quick Actions</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {quickActions.map((a) => (
+                <Link key={a.href} href={a.href} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "12px 14px", borderRadius: 10, textDecoration: "none",
+                  background: "#1a1a28", border: "1px solid #222235",
+                  transition: "all 0.15s"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, color: a.color }}>
+                    {a.icon}
+                    <span style={{ fontSize: 13, fontWeight: 500, color: "#c0c0d8" }}>{a.label}</span>
+                  </div>
+                  <ArrowRight size={14} color="#3a3a5a" />
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* AI Employees */}
-        <div className="mb-8">
-          <h2 className="text-lg font-bold mb-4">Your AI Employees</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {employees.map((e) => (
-              <Link key={e.name} href="/employees"
-                className="glass rounded-2xl p-5 flex flex-col items-center gap-3 hover:scale-105 transition-all cursor-pointer text-center">
-                <span className="text-3xl">{e.emoji}</span>
-                <div>
-                  <p className="font-bold text-sm" style={{ color: e.color }}>{e.name}</p>
-                  <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>{e.desc}</p>
-                </div>
-              </Link>
-            ))}
+          {/* AI Employees */}
+          <div style={{ background: "#16161f", border: "1px solid #1e1e2e", borderRadius: 16, padding: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+              <span style={{ fontSize: 14, fontWeight: 700 }}>AI Employees</span>
+              <Link href="/employees" style={{ fontSize: 12, color: "#7c6fff", textDecoration: "none" }}>View all →</Link>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {employees.map((e) => (
+                <Link key={e.name} href="/employees" style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "10px 14px", borderRadius: 10, textDecoration: "none",
+                  background: "#1a1a28", border: "1px solid #222235"
+                }}>
+                  <span style={{ fontSize: 22 }}>{e.emoji}</span>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: e.color }}>{e.name}</p>
+                    <p style={{ fontSize: 11, color: "#4a4a6a" }}>{e.desc}</p>
+                  </div>
+                  <div style={{ marginLeft: "auto", width: 7, height: 7, borderRadius: "50%", background: "#34d399" }} />
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div>
-          <h2 className="text-lg font-bold mb-4">Recent Activity</h2>
-          <div className="glass rounded-2xl p-8 flex flex-col items-center justify-center text-center"
-            style={{ minHeight: 150 }}>
-            <MessageSquare size={40} style={{ color: "var(--text-secondary)", marginBottom: 12 }} />
-            <p style={{ color: "var(--text-secondary)" }}>No recent activity yet.</p>
-            <Link href="/chat" className="mt-4 text-sm font-semibold" style={{ color: "#6c63ff" }}>
+        <div style={{ background: "#16161f", border: "1px solid #1e1e2e", borderRadius: 16, padding: 24, marginTop: 24 }}>
+          <span style={{ fontSize: 14, fontWeight: 700 }}>Recent Activity</span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 0", gap: 10 }}>
+            <MessageSquare size={32} color="#2a2a3e" />
+            <p style={{ fontSize: 13, color: "#4a4a6a" }}>No recent activity yet.</p>
+            <Link href="/chat" style={{ fontSize: 13, color: "#7c6fff", textDecoration: "none", fontWeight: 500 }}>
               Start your first chat →
             </Link>
           </div>
         </div>
+
       </main>
     </div>
   );
