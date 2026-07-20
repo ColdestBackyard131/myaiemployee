@@ -13,156 +13,101 @@ export default function VoicePage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const SpeechRecognition = (window as any).webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recognition.onresult = (event: any) => {
-        const text = Array.from(event.results).map((r: any) => r[0].transcript).join("");
-        setTranscript(text);
-      };
-
-      recognition.onend = () => {
-        setListening(false);
-      };
-
-      recognitionRef.current = recognition;
+      const SR = (window as any).webkitSpeechRecognition;
+      const r = new SR();
+      r.continuous = false; r.interimResults = true; r.lang = "en-US";
+      r.onresult = (e: any) => setTranscript(Array.from(e.results).map((x: any) => x[0].transcript).join(""));
+      r.onend = () => setListening(false);
+      recognitionRef.current = r;
     }
   }, []);
 
   const toggleListen = () => {
-    if (listening) {
-      recognitionRef.current?.stop();
-      setListening(false);
-      if (transcript) handleSend(transcript);
-    } else {
-      setTranscript("");
-      recognitionRef.current?.start();
-      setListening(true);
-    }
+    if (listening) { recognitionRef.current?.stop(); setListening(false); if (transcript) handleSend(transcript); }
+    else { setTranscript(""); recognitionRef.current?.start(); setListening(true); }
   };
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [{ role: "user", content: text }] }),
-      });
+      const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", content: text }] }) });
       const data = await res.json();
       setResponse(data.reply);
       setHistory((prev) => [...prev, { user: text, ai: data.reply }]);
-      speak(data.reply);
-    } catch {
-      setResponse("Sorry, something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const speak = (text: string) => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
-    }
+      if ("speechSynthesis" in window) { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(data.reply)); }
+    } catch { setResponse("Sorry, something went wrong."); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="flex" style={{ background: "var(--bg-primary)", minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", background: "#080810" }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "20%", left: "30%", width: 400, height: 400, borderRadius: "50%", background: `radial-gradient(circle, ${listening ? "rgba(239,68,68,0.08)" : "rgba(124,111,255,0.08)"} 0%, transparent 70%)`, transition: "background 0.5s" }} />
+      </div>
       <Sidebar />
-      <main className="flex-1 ml-64 p-8 flex flex-col items-center">
-        <div className="w-full max-w-2xl">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-black mb-2">Voice <span className="gradient-text">Assistant</span></h1>
-            <p style={{ color: "var(--text-secondary)" }}>Speak to your AI Employee. It listens and responds.</p>
+      <main className="main-content" style={{ position: "relative", zIndex: 1, padding: "32px 36px", paddingTop: 64, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ width: "100%", maxWidth: 600 }}>
+          <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>Voice <span className="gradient-text">Assistant</span></h1>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>Speak to your AI Employee. It listens and responds.</p>
           </div>
 
-          {/* Mic Button */}
-          <div className="flex flex-col items-center gap-6 mb-10">
-            <button onClick={toggleListen}
-              className="relative w-32 h-32 rounded-full flex items-center justify-center transition-all hover:scale-110"
-              style={{
-                background: listening ? "rgba(239,68,68,0.2)" : "rgba(108,99,255,0.2)",
-                border: `3px solid ${listening ? "#ef4444" : "#6c63ff"}`,
-                boxShadow: listening ? "0 0 40px rgba(239,68,68,0.4)" : "0 0 40px rgba(108,99,255,0.3)",
-              }}>
-              {listening
-                ? <MicOff size={48} color="#ef4444" />
-                : <Mic size={48} color="#6c63ff" />}
-              {listening && (
-                <span className="absolute inset-0 rounded-full animate-ping"
-                  style={{ background: "rgba(239,68,68,0.2)" }} />
-              )}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, marginBottom: 36 }}>
+            <button onClick={toggleListen} style={{
+              width: 120, height: 120, borderRadius: "50%", border: "none", cursor: "pointer",
+              background: listening ? "rgba(239,68,68,0.15)" : "rgba(124,111,255,0.15)",
+              outline: `2px solid ${listening ? "rgba(239,68,68,0.4)" : "rgba(124,111,255,0.4)"}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: listening ? "0 0 40px rgba(239,68,68,0.3)" : "0 0 40px rgba(124,111,255,0.2)",
+              transition: "all 0.3s",
+            } as React.CSSProperties}>
+              {listening ? <MicOff size={44} color="#ef4444" /> : <Mic size={44} color="#a78bfa" />}
             </button>
-            <p className="text-sm font-semibold" style={{ color: listening ? "#ef4444" : "var(--text-secondary)" }}>
+            <p style={{ fontSize: 13, fontWeight: 500, color: listening ? "#ef4444" : "rgba(255,255,255,0.3)" }}>
               {listening ? "🔴 Listening... Click to stop" : "Click to speak"}
             </p>
           </div>
 
-          {/* Transcript */}
           {transcript && (
-            <div className="glass rounded-2xl p-4 mb-4">
-              <p className="text-xs mb-1 font-semibold" style={{ color: "var(--text-secondary)" }}>You said:</p>
-              <p className="text-sm">{transcript}</p>
+            <div className="glass" style={{ padding: 16, marginBottom: 12 }}>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>You said:</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.8)" }}>{transcript}</p>
             </div>
           )}
 
-          {/* Response */}
           {loading && (
-            <div className="glass rounded-2xl p-4 mb-4 flex items-center gap-3">
-              <Bot size={20} color="#6c63ff" />
-              <span className="text-sm animate-pulse">AI is thinking...</span>
+            <div className="glass" style={{ padding: 16, marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
+              <Bot size={18} color="#a78bfa" />
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Thinking...</span>
             </div>
           )}
+
           {response && !loading && (
-            <div className="glass rounded-2xl p-4 mb-6" style={{ border: "1px solid rgba(108,99,255,0.3)" }}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Bot size={18} color="#6c63ff" />
-                  <p className="text-xs font-semibold" style={{ color: "#6c63ff" }}>AI Employee</p>
+            <div className="glass" style={{ padding: 18, marginBottom: 20, border: "1px solid rgba(124,111,255,0.15)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Bot size={16} color="#a78bfa" />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa" }}>AI Employee</span>
                 </div>
-                <button onClick={() => speak(response)} className="p-1 rounded-lg hover:scale-110 transition-all"
-                  style={{ color: "var(--text-secondary)" }}>
-                  <Volume2 size={16} />
+                <button onClick={() => { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(response)); }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)" }}>
+                  <Volume2 size={15} />
                 </button>
               </div>
-              <p className="text-sm leading-relaxed" style={{ whiteSpace: "pre-wrap" }}>{response}</p>
+              <p style={{ fontSize: 13, lineHeight: 1.7, color: "rgba(255,255,255,0.8)", whiteSpace: "pre-wrap" }}>{response}</p>
             </div>
           )}
 
-          {/* History */}
-          {history.length > 0 && (
-            <div>
-              <h2 className="text-sm font-bold mb-3" style={{ color: "var(--text-secondary)" }}>Conversation History</h2>
-              <div className="flex flex-col gap-3">
-                {history.slice(-5).map((h, i) => (
-                  <div key={i} className="glass rounded-xl p-3 text-xs">
-                    <p style={{ color: "#a78bfa" }}>You: {h.user}</p>
-                    <p className="mt-1" style={{ color: "var(--text-secondary)" }}>AI: {h.ai.slice(0, 100)}...</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Tips */}
-          <div className="mt-8 glass rounded-2xl p-5">
-            <p className="text-sm font-bold mb-3">Try saying:</p>
-            <div className="flex flex-col gap-2">
+          <div className="glass" style={{ padding: 18 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.3)", marginBottom: 10 }}>Try saying:</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {["Write a YouTube script", "Create a business plan", "Plan my day", "Give me content ideas"].map((t) => (
-                <button key={t} onClick={() => handleSend(t)}
-                  className="text-left text-sm px-3 py-2 rounded-xl transition-all hover:scale-105"
-                  style={{ background: "rgba(108,99,255,0.1)", color: "#a78bfa" }}>
-                  💬 "{t}"
+                <button key={t} onClick={() => handleSend(t)} style={{
+                  textAlign: "left", padding: "10px 14px", borderRadius: 9, fontSize: 13, cursor: "pointer",
+                  background: "rgba(124,111,255,0.06)", border: "1px solid rgba(124,111,255,0.1)", color: "rgba(255,255,255,0.6)",
+                }}>
+                  💬 &quot;{t}&quot;
                 </button>
               ))}
             </div>

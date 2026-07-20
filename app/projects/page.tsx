@@ -1,14 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import { Plus, FolderOpen, Trash2, Calendar } from "lucide-react";
+import { Plus, FolderOpen, Trash2 } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { addProject, getProjects, deleteProject } from "@/lib/firestore";
 
-type Project = { id: string; name: string; desc: string; color: string; createdAt?: string };
-
-const colors = ["#6c63ff", "#10b981", "#f59e0b", "#ec4899", "#3b82f6", "#ef4444"];
+type Project = { id: string; name: string; desc: string; color: string };
+const colors = ["#7c6fff", "#34d399", "#f59e0b", "#f472b6", "#60a5fa", "#ef4444"];
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -23,8 +22,10 @@ export default function ProjectsPage() {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserId(user.uid);
-        const data = await getProjects(user.uid);
-        setProjects(data as Project[]);
+        try {
+          const data = await getProjects(user.uid);
+          setProjects(data as Project[]);
+        } catch { setProjects([]); }
       }
       setLoading(false);
     });
@@ -44,84 +45,74 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="flex" style={{ background: "var(--bg-primary)", minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", background: "#080810" }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "-10%", right: "10%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(124,111,255,0.08) 0%, transparent 70%)" }} />
+      </div>
       <Sidebar />
-      <main className="flex-1 ml-64 p-8">
-        <div className="flex items-center justify-between mb-8">
+      <main className="main-content" style={{ position: "relative", zIndex: 1, padding: "32px 36px", paddingTop: 64 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
           <div>
-            <h1 className="text-3xl font-black mb-2">My <span className="gradient-text">Projects</span></h1>
-            <p style={{ color: "var(--text-secondary)" }}>{projects.length} active projects</p>
+            <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>My <span className="gradient-text">Projects</span></h1>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>{projects.length} active projects</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm glow transition-all hover:scale-105"
-            style={{ background: "var(--accent)", color: "#fff" }}>
-            <Plus size={18} /> New Project
+          <button onClick={() => setShowForm(!showForm)} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", fontSize: 13 }}>
+            <Plus size={16} /> New Project
           </button>
         </div>
 
-        {/* Add Form */}
         {showForm && (
-          <div className="glass rounded-2xl p-6 mb-6" style={{ border: "1px solid rgba(108,99,255,0.3)" }}>
-            <h2 className="font-bold mb-4">Create New Project</h2>
-            <div className="flex flex-col gap-3">
+          <div className="glass" style={{ padding: 24, marginBottom: 24, border: "1px solid rgba(124,111,255,0.2)" }}>
+            <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Create New Project</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Project name"
-                className="px-4 py-3 rounded-xl text-sm outline-none"
-                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
+                className="input-field" style={{ padding: "11px 14px", fontSize: 13 }} />
               <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description (optional)" rows={2}
-                className="px-4 py-3 rounded-xl text-sm outline-none resize-none"
-                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-              <div className="flex items-center gap-3">
-                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Color:</span>
+                className="input-field" style={{ padding: "11px 14px", fontSize: 13, resize: "none" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Color:</span>
                 {colors.map((c) => (
-                  <button key={c} onClick={() => setColor(c)}
-                    className="w-7 h-7 rounded-full transition-all hover:scale-125"
-                    style={{ background: c, border: color === c ? "3px solid #fff" : "none" }} />
+                  <button key={c} onClick={() => setColor(c)} style={{
+                    width: 24, height: 24, borderRadius: "50%", background: c, border: "none", cursor: "pointer",
+                    outline: color === c ? `3px solid ${c}` : "none", outlineOffset: 2,
+                  }} />
                 ))}
               </div>
-              <div className="flex gap-3">
-                <button onClick={handleAdd}
-                  className="px-6 py-2 rounded-xl text-sm font-bold glow"
-                  style={{ background: "var(--accent)", color: "#fff" }}>
-                  Create
-                </button>
-                <button onClick={() => setShowForm(false)}
-                  className="px-6 py-2 rounded-xl text-sm font-bold"
-                  style={{ border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
-                  Cancel
-                </button>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={handleAdd} className="btn-primary" style={{ padding: "9px 20px", fontSize: 13 }}>Create</button>
+                <button onClick={() => setShowForm(false)} style={{
+                  padding: "9px 20px", fontSize: 13, borderRadius: 10, cursor: "pointer",
+                  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)",
+                }}>Cancel</button>
               </div>
             </div>
           </div>
         )}
 
         {loading ? (
-          <div className="glass rounded-2xl p-8 text-center" style={{ color: "var(--text-secondary)" }}>
+          <div className="glass" style={{ padding: 48, textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
             Loading projects...
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
             {projects.length === 0 && (
-              <div className="glass rounded-2xl p-8 text-center col-span-3" style={{ color: "var(--text-secondary)" }}>
-                No projects yet. Create your first one! 🚀
+              <div className="glass" style={{ padding: 48, textAlign: "center", gridColumn: "1/-1" }}>
+                <FolderOpen size={36} color="rgba(124,111,255,0.3)" style={{ margin: "0 auto 12px" }} />
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)" }}>No projects yet. Create your first one!</p>
               </div>
             )}
             {projects.map((p) => (
-              <div key={p.id} className="glass rounded-2xl p-6 hover:scale-105 transition-all"
-                style={{ borderTop: `3px solid ${p.color}` }}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 rounded-xl" style={{ background: `${p.color}20` }}>
-                    <FolderOpen size={24} style={{ color: p.color }} />
+              <div key={p.id} className="card-hover" style={{ padding: 22, borderTop: `2px solid ${p.color}` }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: `${p.color}15`, border: `1px solid ${p.color}25`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <FolderOpen size={20} style={{ color: p.color }} />
                   </div>
-                  <button onClick={() => handleDelete(p.id)}
-                    className="p-2 rounded-lg hover:scale-110 transition-all" style={{ color: "#ef4444" }}>
-                    <Trash2 size={16} />
+                  <button onClick={() => handleDelete(p.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(239,68,68,0.5)", padding: 4 }}>
+                    <Trash2 size={15} />
                   </button>
                 </div>
-                <h3 className="font-bold text-lg mb-2">{p.name}</h3>
-                <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>{p.desc}</p>
-                <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-secondary)" }}>
-                  <Calendar size={12} /> {new Date().toISOString().split("T")[0]}
-                </div>
+                <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, color: "#fff" }}>{p.name}</h3>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", lineHeight: 1.5 }}>{p.desc}</p>
               </div>
             ))}
           </div>

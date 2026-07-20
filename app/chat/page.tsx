@@ -30,9 +30,7 @@ export default function ChatPage() {
       if (user) {
         setUserId(user.uid);
         const history = await getChats(user.uid);
-        if (history.length > 0) {
-          setMessages(history as unknown as Message[]);
-        }
+        if (history.length > 0) setMessages(history as unknown as Message[]);
       }
     });
     return () => unsub();
@@ -46,14 +44,11 @@ export default function ChatPage() {
     const userText = text || input.trim();
     if (!userText) return;
     setInput("");
-
     const userMsg: Message = { role: "user", content: userText };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setLoading(true);
-
     if (userId) await saveChat(userId, userMsg);
-
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -65,8 +60,7 @@ export default function ChatPage() {
       setMessages([...newMessages, aiMsg]);
       if (userId) await saveChat(userId, aiMsg);
     } catch {
-      const errMsg: Message = { role: "assistant", content: "Sorry, I encountered an error. Please check your API key in settings." };
-      setMessages([...newMessages, errMsg]);
+      setMessages([...newMessages, { role: "assistant", content: "Sorry, something went wrong." }]);
     } finally {
       setLoading(false);
     }
@@ -78,52 +72,69 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex" style={{ background: "var(--bg-primary)", minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", background: "#080810" }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "-10%", left: "20%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(124,111,255,0.08) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "10%", right: "10%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%)" }} />
+      </div>
       <Sidebar />
-      <main className="flex-1 ml-64 flex flex-col h-screen">
+      <main className="main-content" style={{ display: "flex", flexDirection: "column", height: "100vh", position: "relative", zIndex: 1, paddingTop: 52 }}>
         {/* Header */}
-        <div className="glass px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl" style={{ background: "rgba(108,99,255,0.2)" }}>
-              <Bot size={22} color="#6c63ff" />
+        <div style={{
+          padding: "14px 28px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "rgba(8,8,16,0.8)", backdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(124,111,255,0.15)", border: "1px solid rgba(124,111,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Bot size={20} color="#a78bfa" />
             </div>
             <div>
-              <h1 className="font-bold">AI Chat</h1>
-              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Your AI Employee is online</p>
+              <h1 style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>AI Chat</h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", boxShadow: "0 0 6px #34d399" }} />
+                <span style={{ fontSize: 11, color: "#34d399" }}>Online</span>
+              </div>
             </div>
           </div>
-          <button onClick={handleClear}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all hover:scale-105"
-            style={{ border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
-            <Trash2 size={16} /> Clear
+          <button onClick={handleClear} style={{
+            display: "flex", alignItems: "center", gap: 6, padding: "7px 14px",
+            borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer",
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", color: "rgba(239,68,68,0.7)",
+          }}>
+            <Trash2 size={13} /> Clear
           </button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-4">
+        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px", display: "flex", flexDirection: "column", gap: 16 }}>
           {messages.map((msg, i) => (
-            <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-              <div className="p-2 rounded-xl h-fit flex-shrink-0"
-                style={{ background: msg.role === "user" ? "rgba(108,99,255,0.2)" : "rgba(16,185,129,0.2)" }}>
-                {msg.role === "user" ? <User size={18} color="#6c63ff" /> : <Bot size={18} color="#10b981" />}
+            <div key={i} style={{ display: "flex", gap: 12, flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                background: msg.role === "user" ? "rgba(124,111,255,0.2)" : "rgba(52,211,153,0.15)",
+                border: `1px solid ${msg.role === "user" ? "rgba(124,111,255,0.3)" : "rgba(52,211,153,0.2)"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                {msg.role === "user" ? <User size={15} color="#a78bfa" /> : <Bot size={15} color="#34d399" />}
               </div>
-              <div className="max-w-2xl px-4 py-3 rounded-2xl text-sm leading-relaxed"
-                style={{
-                  background: msg.role === "user" ? "rgba(108,99,255,0.15)" : "var(--bg-card)",
-                  border: "1px solid var(--border)",
-                  whiteSpace: "pre-wrap",
-                }}>
+              <div style={{
+                maxWidth: "70%", padding: "12px 16px", borderRadius: 14, fontSize: 13, lineHeight: 1.7,
+                background: msg.role === "user" ? "rgba(124,111,255,0.12)" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${msg.role === "user" ? "rgba(124,111,255,0.2)" : "rgba(255,255,255,0.06)"}`,
+                whiteSpace: "pre-wrap", color: "rgba(255,255,255,0.85)",
+              }}>
                 {msg.content}
               </div>
             </div>
           ))}
           {loading && (
-            <div className="flex gap-3">
-              <div className="p-2 rounded-xl h-fit" style={{ background: "rgba(16,185,129,0.2)" }}>
-                <Bot size={18} color="#10b981" />
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Bot size={15} color="#34d399" />
               </div>
-              <div className="px-4 py-3 rounded-2xl text-sm" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-                <span className="animate-pulse">Thinking...</span>
+              <div style={{ padding: "12px 16px", borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
+                <span style={{ animation: "pulse 1.5s ease-in-out infinite" }}>Thinking...</span>
               </div>
             </div>
           )}
@@ -132,33 +143,36 @@ export default function ChatPage() {
 
         {/* Suggestions */}
         {messages.length <= 1 && (
-          <div className="px-6 pb-2 flex flex-wrap gap-2">
+          <div style={{ padding: "0 28px 12px", display: "flex", flexWrap: "wrap", gap: 8 }}>
             {suggestions.map((s) => (
-              <button key={s} onClick={() => sendMessage(s)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all hover:scale-105"
-                style={{ background: "rgba(108,99,255,0.1)", border: "1px solid rgba(108,99,255,0.2)", color: "#a78bfa" }}>
-                <Sparkles size={12} /> {s}
+              <button key={s} onClick={() => sendMessage(s)} style={{
+                display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
+                borderRadius: 8, fontSize: 12, cursor: "pointer", transition: "all 0.15s",
+                background: "rgba(124,111,255,0.08)", border: "1px solid rgba(124,111,255,0.15)", color: "#a78bfa",
+              }}>
+                <Sparkles size={11} /> {s}
               </button>
             ))}
           </div>
         )}
 
         {/* Input */}
-        <div className="px-6 py-4" style={{ borderTop: "1px solid var(--border)" }}>
-          <div className="flex gap-3">
+        <div style={{ padding: "14px 28px", borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(8,8,16,0.8)", backdropFilter: "blur(20px)" }}>
+          <div style={{ display: "flex", gap: 10 }}>
             <input value={input} onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
               placeholder="Ask your AI Employee anything..."
-              className="flex-1 px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
+              className="input-field"
+              style={{ flex: 1, padding: "12px 16px", fontSize: 13 }} />
             <button onClick={() => sendMessage()} disabled={loading || !input.trim()}
-              className="px-4 py-3 rounded-xl transition-all hover:scale-105 disabled:opacity-50 glow"
-              style={{ background: "var(--accent)", color: "#fff" }}>
-              <Send size={18} />
+              className="btn-primary"
+              style={{ padding: "12px 18px", opacity: loading || !input.trim() ? 0.4 : 1 }}>
+              <Send size={16} />
             </button>
           </div>
         </div>
       </main>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </div>
   );
 }

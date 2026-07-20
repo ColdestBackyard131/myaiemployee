@@ -7,7 +7,6 @@ import {
   doc,
   query,
   where,
-  orderBy,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -23,7 +22,7 @@ export async function addTask(userId: string, task: { text: string; priority: st
 }
 
 export async function getTasks(userId: string) {
-  const q = query(collection(db, "tasks"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+  const q = query(collection(db, "tasks"), where("userId", "==", userId));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
@@ -46,7 +45,7 @@ export async function saveChat(userId: string, message: { role: string; content:
 }
 
 export async function getChats(userId: string) {
-  const q = query(collection(db, "chats"), where("userId", "==", userId), orderBy("createdAt", "asc"));
+  const q = query(collection(db, "chats"), where("userId", "==", userId));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
@@ -67,7 +66,7 @@ export async function addProject(userId: string, project: { name: string; desc: 
 }
 
 export async function getProjects(userId: string) {
-  const q = query(collection(db, "projects"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+  const q = query(collection(db, "projects"), where("userId", "==", userId));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }

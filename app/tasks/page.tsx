@@ -1,20 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import { Plus, CheckSquare, Square, Trash2, Calendar, Sparkles } from "lucide-react";
+import { Plus, CheckSquare, Square, Trash2, Sparkles } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { addTask, getTasks, updateTask, deleteTask } from "@/lib/firestore";
 
-type Task = {
-  id: string;
-  text: string;
-  done: boolean;
-  priority: "high" | "medium" | "low";
-  date: string;
-};
-
-const priorityColors = { high: "#ef4444", medium: "#f59e0b", low: "#10b981" };
+type Task = { id: string; text: string; done: boolean; priority: "high" | "medium" | "low"; date: string };
+const priorityColors = { high: "#ef4444", medium: "#f59e0b", low: "#34d399" };
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -29,8 +22,8 @@ export default function TasksPage() {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserId(user.uid);
-        const data = await getTasks(user.uid);
-        setTasks(data as Task[]);
+        try { const data = await getTasks(user.uid); setTasks(data as Task[]); }
+        catch { setTasks([]); }
       }
       setLoading(false);
     });
@@ -46,7 +39,7 @@ export default function TasksPage() {
 
   const handleToggle = async (task: Task) => {
     await updateTask(task.id, { done: !task.done });
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, done: !t.done } : t)));
+    setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, done: !t.done } : t));
   };
 
   const handleDelete = async (id: string) => {
@@ -57,9 +50,8 @@ export default function TasksPage() {
   const handleAiTask = async () => {
     if (!aiInput.trim()) return;
     const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [{ role: "user", content: `Extract a task from this: "${aiInput}". Reply with ONLY the task text, nothing else.` }] }),
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [{ role: "user", content: `Extract a task from: "${aiInput}". Reply with ONLY the task text.` }] }),
     });
     const data = await res.json();
     await handleAdd(data.reply, "medium");
@@ -70,118 +62,96 @@ export default function TasksPage() {
   const completed = tasks.filter((t) => t.done);
 
   return (
-    <div className="flex" style={{ background: "var(--bg-primary)", minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", background: "#080810" }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "20%", left: "5%", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(124,111,255,0.07) 0%, transparent 70%)" }} />
+      </div>
       <Sidebar />
-      <main className="flex-1 ml-64 p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-black mb-2">Task <span className="gradient-text">Manager</span></h1>
-          <p style={{ color: "var(--text-secondary)" }}>{pending.length} pending · {completed.length} completed</p>
+      <main className="main-content" style={{ position: "relative", zIndex: 1, padding: "32px 36px", paddingTop: 64 }}>
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>Task <span className="gradient-text">Manager</span></h1>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>{pending.length} pending · {completed.length} completed</p>
         </div>
 
-        {/* AI Task Input */}
-        <div className="glass rounded-2xl p-5 mb-6" style={{ border: "1px solid rgba(108,99,255,0.3)" }}>
-          <p className="text-sm font-bold mb-3 flex items-center gap-2">
-            <Sparkles size={16} color="#6c63ff" /> Tell AI to create a task
+        <div className="glass" style={{ padding: 20, marginBottom: 16, border: "1px solid rgba(124,111,255,0.15)" }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+            <Sparkles size={13} /> Tell AI to create a task
           </p>
-          <div className="flex gap-3">
+          <div style={{ display: "flex", gap: 10 }}>
             <input value={aiInput} onChange={(e) => setAiInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAiTask()}
-              placeholder='e.g. "Remind me to upload a YouTube video tomorrow"'
-              className="flex-1 px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-            <button onClick={handleAiTask}
-              className="px-4 py-3 rounded-xl text-sm font-bold glow"
-              style={{ background: "var(--accent)", color: "#fff" }}>
-              Create
-            </button>
+              placeholder='"Remind me to upload a YouTube video tomorrow"'
+              className="input-field" style={{ flex: 1, padding: "10px 14px", fontSize: 13 }} />
+            <button onClick={handleAiTask} className="btn-primary" style={{ padding: "10px 18px", fontSize: 13 }}>Create</button>
           </div>
         </div>
 
-        {/* Manual Add */}
-        <div className="glass rounded-2xl p-5 mb-6">
-          <p className="text-sm font-bold mb-3">Add Task Manually</p>
-          <div className="flex gap-3 flex-wrap">
+        <div className="glass" style={{ padding: 20, marginBottom: 24 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Add Manually</p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <input value={input} onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd(input)}
               placeholder="Task description..."
-              className="flex-1 px-4 py-3 rounded-xl text-sm outline-none min-w-48"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
+              className="input-field" style={{ flex: 1, minWidth: 200, padding: "10px 14px", fontSize: 13 }} />
             <select value={priority} onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}
-              className="px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+              className="input-field" style={{ width: "auto", padding: "10px 14px", fontSize: 13 }}>
               <option value="high">🔴 High</option>
               <option value="medium">🟡 Medium</option>
               <option value="low">🟢 Low</option>
             </select>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-              className="px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-            <button onClick={() => handleAdd(input)}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold glow"
-              style={{ background: "var(--accent)", color: "#fff" }}>
-              <Plus size={16} /> Add
+              className="input-field" style={{ width: "auto", padding: "10px 14px", fontSize: 13 }} />
+            <button onClick={() => handleAdd(input)} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 18px", fontSize: 13 }}>
+              <Plus size={15} /> Add
             </button>
           </div>
         </div>
 
         {loading ? (
-          <div className="glass rounded-2xl p-8 text-center" style={{ color: "var(--text-secondary)" }}>
-            Loading tasks...
-          </div>
+          <div className="glass" style={{ padding: 48, textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Loading tasks...</div>
         ) : (
           <>
-            {/* Pending */}
-            <div className="mb-6">
-              <h2 className="text-lg font-bold mb-4">Pending ({pending.length})</h2>
-              <div className="flex flex-col gap-3">
-                {pending.length === 0 && (
-                  <div className="glass rounded-2xl p-6 text-center" style={{ color: "var(--text-secondary)" }}>
-                    No pending tasks. Great job! 🎉
-                  </div>
-                )}
-                {pending.map((task) => (
-                  <div key={task.id} className="glass rounded-2xl p-4 flex items-center gap-4 hover:scale-[1.01] transition-all">
-                    <button onClick={() => handleToggle(task)}>
-                      <Square size={20} style={{ color: priorityColors[task.priority] }} />
-                    </button>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{task.text}</p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs px-2 py-0.5 rounded-full"
-                          style={{ background: `${priorityColors[task.priority]}20`, color: priorityColors[task.priority] }}>
-                          {task.priority}
-                        </span>
-                        <span className="text-xs flex items-center gap-1" style={{ color: "var(--text-secondary)" }}>
-                          <Calendar size={12} /> {task.date}
-                        </span>
-                      </div>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10 }}>Pending ({pending.length})</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+              {pending.length === 0 && (
+                <div className="glass" style={{ padding: 24, textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.25)" }}>No pending tasks. Great job! 🎉</div>
+              )}
+              {pending.map((task) => (
+                <div key={task.id} className="glass" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12 }}>
+                  <button onClick={() => handleToggle(task)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+                    <Square size={18} style={{ color: priorityColors[task.priority] }} />
+                  </button>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>{task.text}</p>
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: `${priorityColors[task.priority]}15`, color: priorityColors[task.priority] }}>{task.priority}</span>
+                      <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{task.date}</span>
                     </div>
-                    <button onClick={() => handleDelete(task.id)} style={{ color: "#ef4444" }}>
-                      <Trash2 size={16} />
-                    </button>
                   </div>
-                ))}
-              </div>
+                  <button onClick={() => handleDelete(task.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(239,68,68,0.5)" }}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
 
-            {/* Completed */}
             {completed.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold mb-4" style={{ color: "var(--text-secondary)" }}>Completed ({completed.length})</h2>
-                <div className="flex flex-col gap-3">
+              <>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10 }}>Completed ({completed.length})</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {completed.map((task) => (
-                    <div key={task.id} className="glass rounded-2xl p-4 flex items-center gap-4 opacity-60">
-                      <button onClick={() => handleToggle(task)}>
-                        <CheckSquare size={20} color="#10b981" />
+                    <div key={task.id} className="glass" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, opacity: 0.5 }}>
+                      <button onClick={() => handleToggle(task)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+                        <CheckSquare size={18} color="#34d399" />
                       </button>
-                      <p className="flex-1 text-sm line-through" style={{ color: "var(--text-secondary)" }}>{task.text}</p>
-                      <button onClick={() => handleDelete(task.id)} style={{ color: "#ef4444" }}>
-                        <Trash2 size={16} />
+                      <p style={{ flex: 1, fontSize: 13, textDecoration: "line-through", color: "rgba(255,255,255,0.4)" }}>{task.text}</p>
+                      <button onClick={() => handleDelete(task.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(239,68,68,0.5)" }}>
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
                 </div>
-              </div>
+              </>
             )}
           </>
         )}
