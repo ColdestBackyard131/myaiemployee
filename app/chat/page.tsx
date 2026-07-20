@@ -2,6 +2,9 @@
 import { useState, useRef, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Send, Bot, User, Trash2, Sparkles } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { saveChat, getChats, clearChats } from "@/lib/firestore";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -19,7 +22,21 @@ export default function ChatPage() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUserId(user.uid);
+        const history = await getChats(user.uid);
+        if (history.length > 0) {
+          setMessages(history as Message[]);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,9 +46,13 @@ export default function ChatPage() {
     const userText = text || input.trim();
     if (!userText) return;
     setInput("");
-    const newMessages: Message[] = [...messages, { role: "user", content: userText }];
+
+    const userMsg: Message = { role: "user", content: userText };
+    const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setLoading(true);
+
+    if (userId) await saveChat(userId, userMsg);
 
     try {
       const res = await fetch("/api/chat", {
@@ -40,12 +61,20 @@ export default function ChatPage() {
         body: JSON.stringify({ messages: newMessages }),
       });
       const data = await res.json();
-      setMessages([...newMessages, { role: "assistant", content: data.reply }]);
+      const aiMsg: Message = { role: "assistant", content: data.reply };
+      setMessages([...newMessages, aiMsg]);
+      if (userId) await saveChat(userId, aiMsg);
     } catch {
-      setMessages([...newMessages, { role: "assistant", content: "Sorry, I encountered an error. Please check your API key in settings." }]);
+      const errMsg: Message = { role: "assistant", content: "Sorry, I encountered an error. Please check your API key in settings." };
+      setMessages([...newMessages, errMsg]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClear = async () => {
+    if (userId) await clearChats(userId);
+    setMessages([{ role: "assistant", content: "Hello! I'm your AI Employee. How can I help you today? 🚀" }]);
   };
 
   return (
@@ -63,7 +92,7 @@ export default function ChatPage() {
               <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Your AI Employee is online</p>
             </div>
           </div>
-          <button onClick={() => setMessages([{ role: "assistant", content: "Hello! I'm your AI Employee. How can I help you today? 🚀" }])}
+          <button onClick={handleClear}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all hover:scale-105"
             style={{ border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
             <Trash2 size={16} /> Clear
