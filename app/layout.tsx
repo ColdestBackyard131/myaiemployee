@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "My AI Employee",
   description: "Your personal AI-powered productivity platform",
+  icons: {
+    icon: "/images/logo.jpeg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

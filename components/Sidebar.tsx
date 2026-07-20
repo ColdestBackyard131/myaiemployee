@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bot, LayoutDashboard, MessageSquare, Mic, Users, CheckSquare, FolderOpen, Share2, Settings, LogOut } from "lucide-react";
+import Image from "next/image";
+import { LayoutDashboard, MessageSquare, Mic, Users, CheckSquare, FolderOpen, Share2, Settings, LogOut } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 
@@ -30,9 +31,7 @@ export default function Sidebar() {
       style={{ borderRight: "1px solid var(--border)" }}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5" style={{ borderBottom: "1px solid var(--border)" }}>
-        <div className="p-2 rounded-xl" style={{ background: "rgba(108,99,255,0.2)" }}>
-          <Bot size={22} color="#6c63ff" />
-        </div>
+        <Image src="/images/logo.jpeg" alt="My AI Employee" width={36} height={36} className="rounded-xl" />
         <span className="font-black text-base gradient-text">My AI Employee</span>
       </div>
 

@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bot, Mail, Lock, Eye, EyeOff, Chrome } from "lucide-react";
+import Image from "next/image";
+import { Mail, Lock, Eye, EyeOff, Chrome } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
@@ -54,8 +55,8 @@ export default function LoginPage() {
       <div className="glass rounded-3xl p-8 w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="p-4 rounded-2xl mb-4 glow" style={{ background: "rgba(108,99,255,0.2)" }}>
-            <Bot size={40} color="#6c63ff" />
+          <div className="mb-4">
+            <Image src="/images/logo.jpeg" alt="My AI Employee" width={72} height={72} className="rounded-2xl glow" />
           </div>
           <h1 className="text-2xl font-black gradient-text">My AI Employee</h1>
           <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>

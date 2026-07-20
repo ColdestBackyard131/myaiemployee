@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Bot, Mic, CheckSquare, BarChart2, Users, ArrowRight, Zap, Shield, Globe } from "lucide-react";
+import Image from "next/image";
 
 export default function Home() {
   const features = [
@@ -25,7 +26,7 @@ export default function Home() {
       {/* Navbar */}
       <nav className="glass fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Bot size={28} color="#6c63ff" />
+          <Image src="/images/logo.jpeg" alt="Logo" width={36} height={36} className="rounded-xl" />
           <span className="text-xl font-bold gradient-text">My AI Employee</span>
         </div>
         <div className="flex gap-4">
